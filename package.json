@@ -1,12 +1,15 @@
 {
   "name": "browser-recording-demo",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "author": "Daisuke Shimamoto <diskshima@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "audio-recorder-polyfill": "^0.3.6"
+  }
 }
