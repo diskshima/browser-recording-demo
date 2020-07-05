@@ -1,13 +1,61 @@
-import AudioRecorder from 'audio-recorder-polyfill';
-window.MediaRecorder = AudioRecorder;
+import AudioRecorder from 'audio-recorder-polyfill'
+import mpegEncoder from 'audio-recorder-polyfill/mpeg-encoder'
 
+const audiotypeRadios = document.getElementsByName('audiotype');
 const recordButton = document.getElementById('record');
 const stopButton = document.getElementById('stop');
 const shareButton = document.getElementById('share');
 const downloadButton = document.getElementById('download');
+const messageDiv = document.getElementById('message');
 
 var recorder;
 var recordedData;
+var audiotype;
+
+window.MediaRecorder = AudioRecorder;
+
+const defaultEncoder = AudioRecorder.encoder;
+const defaultMimeType = AudioRecorder.prototype.mimeType;
+
+function logMessage(message) {
+  console.log(message);
+
+  const newDiv = document.createElement('div');
+  newDiv.innerText = message;
+  messageDiv.appendChild(newDiv);
+}
+
+function swithRecorder(type) {
+  logMessage('Switching to ' + type);
+  if (type === 'default') {
+    audiotype = 'default';
+    AudioRecorder.encoder = defaultEncoder;
+    AudioRecorder.prototype.mimeType = defaultMimeType;
+  } else if (type === 'mp3') {
+    audiotype = 'mp3';
+    AudioRecorder.encoder = mpegEncoder;
+    AudioRecorder.prototype.mimeType = 'audio/mpeg';
+  } else {
+    logMessage('No such recorder type', type);
+  }
+}
+
+function generateFilename() {
+  switch (audiotype) {
+    case 'default':
+      return 'audio.wav';
+    case 'mp3':
+      return 'audio.mp3';
+    default:
+      logMessage('No such recorder type', audiotype);
+  }
+};
+
+audiotypeRadios.forEach((radio) => {
+  radio.addEventListener('click', (event) => {
+    swithRecorder(event.target.value);
+  });
+});
 
 recordButton.addEventListener('click', () => {
   // Request permissions to record audio
@@ -17,8 +65,6 @@ recordButton.addEventListener('click', () => {
     // Set record to <audio> when recording will be finished
     recorder.addEventListener('dataavailable', e => {
       // audio.src = URL.createObjectURL(e.data)
-      console.log(e);
-      console.log('Data type: ', e.data.type);
       recordedData = e.data;
     })
 
@@ -40,22 +86,24 @@ shareButton.addEventListener('click', () => {
     return;
   }
 
-  const dataFile = {
-    title: 'audio.wav',
-    files: recordedData,
+  const recordedFile = new File([recordedData], generateFilename(), { type: recordedData.type });
+
+  const fileData = {
+    files: [recordedFile],
   };
 
-  if (navigator.canShare && !navigator.canShare(dataFile)) {
+  if (navigator.canShare && !navigator.canShare(fileData)) {
     alert('Cannot share this data');
     return;
   }
 
-  navigator.share(dataFile)
+  navigator.share(fileData)
     .then(() => {
-      console.log('Successful share')
+      logMessage('Successful share')
     })
     .catch((error) => {
-      console.log('Error sharing', error)
+      console.log(error);
+      logMessage('Error sharing' + error)
     });
 });
 
@@ -64,7 +112,7 @@ downloadButton.addEventListener('click', () => {
   document.body.appendChild(a);
   const blobUrl = window.URL.createObjectURL(recordedData);
   a.href = blobUrl;
-  a.download = 'audio.wav';
+  a.download = generateFilename();
   a.click();
   setTimeout(() => {
     window.URL.revokeObjectURL(blobUrl);

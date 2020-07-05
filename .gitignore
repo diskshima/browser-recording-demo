@@ -1,3 +1,6 @@
 # Parcel
 dist/
 .cache/
+
+# Certificates
+certs/
